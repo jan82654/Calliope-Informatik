@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3x3 Zufallsfelder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #393b3d;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 600px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            pointer-events: none;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #0f0f0f;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s;
+        }
+        .cell:not(.hidden) {
+            background-color: #2a2a2a;
+            transform: rotateY(360deg);
+        }
+        .hidden {
+            color: transparent;
+            transition: all 0.3s ease;
+        }
+        .cell {
+            transform: rotateY(0deg);
+            transition: all 0.3s ease;
+        }
+        #startButton {
+            transform: scale(1);
+            transition: transform 0.2s ease;
+        }
+        #startButton:hover {
+            transform: scale(1.1);
+        }
+        #startButton:active {
+            transform: scale(0.95);
+        }
+        #message {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: red;
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            min-height: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #startButton, #finishButton {
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #0f0f0f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        #startButton:hover, #finishButton:hover {
+            background-color: #2a2a2a;
+        }
+        #startButton:disabled, #finishButton:disabled {
+            background-color: #1a1a1a;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .money-gain {
+            position: fixed;
+            color: #4CAF50;
+            font-size: 24px;
+            font-weight: bold;
+            animation: floatUp 1.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        #moneyCounter {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background-color: #0f0f0f;
+            color: #4CAF50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: transform 0.3s ease;
+        }
+
+        .pop {
+            animation: pop 0.3s ease;
+        }
+        #gameCounter {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #startMessage {
+            font-size: 18px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 10px;
+            display: block;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+</head>
+<body>
+    <div class="game-container">
+        <button id="startButton">Start</button>
+        <div id="startMessage">Drück auf Start Justus du Penis</div>
+        <div id="moneyCounter">Geld: 0€</div>
+        <div id="gameCounter">Spiele: 5</div>
+        <div id="message"></div>
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <script>
+        let gameStarted = false;
+        let money = 0;
+        let openedMoneyBags = 0;
+        let gamesLeft = 5;
+        const grid = document.getElementById("grid");
+        const message = document.getElementById("message");
+        const startButton = document.getElementById("startButton");
+        const finishButton = document.getElementById("finishButton");
+        const moneyCounter = document.getElementById("moneyCounter");
+        const gameCounter = document.getElementById("gameCounter");
+        const startMessage = document.getElementById("startMessage");
+
+        function updateCounters() {
+            moneyCounter.textContent = `${money}€`;
+            gameCounter.textContent = `Spiele: ${gamesLeft}`;
+        }
+
+        function initializeGame() {
+            if (!gameStarted) {
+                startButton.disabled = false;
+                return;
+            }
+            
+            const bombCount = Math.random() < 0.5 ? 1 : 2;
+            let contentArray = Array(9).fill("💰");
+            for(let i = 0; i < bombCount; i++) {
+                contentArray[i] = "💣";
+            }
+            contentArray.sort(() => Math.random() - 0.5);
+            
+            grid.innerHTML = "";
+            message.textContent = "";
+            grid.style.pointerEvents = "auto";
+            openedMoneyBags = 0;
+            startMessage.style.display = "none";
+            
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement("div");
+                cell.classList.add("cell", "hidden");
+                cell.textContent = contentArray[i];
+                cell.addEventListener("click", () => {
+                    if (!gameStarted) return;
+                    if (!cell.classList.contains("hidden")) return;
+                    
+                    
+                    
+                    cell.classList.remove("hidden");
+                    
+                    if (cell.textContent === "💣") {
+                        message.textContent = "Verloren";
+                        gameStarted = false;
+                        grid.style.pointerEvents = "none";
+                        startButton.disabled = false;
+                        
+                        // Alle Felder aufdecken nach Verlust
+                        const allCells = document.querySelectorAll('.cell');
+                        allCells.forEach(c => {
+                            c.classList.remove('hidden');
+                        });
+                    } else if (cell.textContent === "💰") {
+                        openedMoneyBags++;
+                        if (openedMoneyBags >= 5) {
+                            money += 10;
+                            // Money gain animation
+                            const moneyGain = document.createElement('div');
+                            moneyGain.textContent = '+10€';
+                            moneyGain.className = 'money-gain';
+                            moneyGain.style.left = '50%';
+                            moneyGain.style.top = '50%';
+                            moneyGain.style.transform = 'translate(-50%, -50%)';
+                            document.body.appendChild(moneyGain);
+                            setTimeout(() => moneyGain.remove(), 1500);
+                            
+                            // Counter pop animation
+                            moneyCounter.classList.add('pop');
+                            setTimeout(() => moneyCounter.classList.remove('pop'), 300);
+                            
+                            updateCounters();
+                            gameStarted = false;
+                            grid.style.pointerEvents = "none";
+                            
+                            // Alle Felder aufdecken
+                            const cells = document.querySelectorAll('.cell');
+                            cells.forEach(cell => {
+                                cell.classList.remove('hidden');
+                            });
+                            
+                            startButton.disabled = false;
+                            if (gamesLeft <= 0) {
+                                message.textContent = "Keine Spiele mehr übrig!";
+                                startButton.disabled = true;
+                                showStatistics();
+                            }
+                        }
+                    }
+                });
+                grid.appendChild(cell);
+            }
+        }
+        
+        startButton.addEventListener("click", () => {
+            if (gamesLeft > 0) {
+                gameStarted = true;
+                gamesLeft--;
+                updateCounters();
+                startButton.disabled = true;
+                startButton.textContent = "Neustart";
+                initializeGame();
+                
+                if (gamesLeft === 0) {
+                    startButton.textContent = "Ende";
+                }
+            } else {
+                message.textContent = "Keine Spiele mehr übrig!";
+                startButton.disabled = true;
+                showStatistics();
+            }
+        });
+
+        function showStatistics() {
+            const statisticsMessage = `🎮 Spielstatistik\n💰 Gesamtes Geld: ${money}€`;
+            message.style.color = "#4CAF50";
+            message.style.whiteSpace = "pre-line";
+            message.style.fontSize = "18px";
+            message.style.textAlign = "center";
+            message.style.display = "flex";
+            message.style.flexDirection = "column";
+            message.style.alignItems = "center";
+            message.textContent = statisticsMessage;
+        }
+        
+        updateCounters();
+    </script>
+</body>
+</html>

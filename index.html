@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3x3 Zufallsfelder</title>
+    <title>Jsuuts</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -54,7 +54,7 @@
         .cell {
             transform: rotateY(0deg);
             transition: all 0.3s ease;
-        }
+         }
         #startButton {
             transform: scale(1);
             transition: transform 0.2s ease;
@@ -182,9 +182,9 @@
             }
             
             const bombCount = Math.random() < 0.5 ? 1 : 2;
-            let contentArray = Array(9).fill("💰");
+            let contentArray = Array(9).fill("+");
             for(let i = 0; i < bombCount; i++) {
-                contentArray[i] = "💣";
+                contentArray[i] = "bum";
             }
             contentArray.sort(() => Math.random() - 0.5);
             
@@ -206,7 +206,7 @@
                     
                     cell.classList.remove("hidden");
                     
-                    if (cell.textContent === "💣") {
+                    if (cell.textContent === "bum") {
                         message.textContent = "Verloren";
                         gameStarted = false;
                         grid.style.pointerEvents = "none";
@@ -217,7 +217,7 @@
                         allCells.forEach(c => {
                             c.classList.remove('hidden');
                         });
-                    } else if (cell.textContent === "💰") {
+                    } else if (cell.textContent === "+") {
                         openedMoneyBags++;
                         if (openedMoneyBags >= 5) {
                             money += 10;
